@@ -151,7 +151,117 @@ namespace OOP03_SmartDelivery
     }
     #endregion
 
-   
+    #region Derived Classes
+
+    #region StandardShipment
+    public class StandardShipment : Shipment
+    {
+        #region Constructors
+        public StandardShipment(string trackingCode, string description, decimal weight, decimal deliveryFee, DeliveryAddress destination)
+            : base(trackingCode, description, weight, deliveryFee, destination) { }
+        #endregion
+
+        #region Methods
+        public override void PrintShipment()
+        {
+            Console.WriteLine("Standard Shipment\n");
+            base.PrintShipment();
+            Console.WriteLine("\n------------------------------------------\n");
+        }
+        #endregion
+    }
+    #endregion
+
+    #region ExpressShipment
+    public class ExpressShipment : Shipment
+    {
+        #region Fields & Properties
+        private decimal extraFee;
+        public decimal ExtraFee
+        {
+            get { return extraFee; }
+            set { if (value >= 0) extraFee = value; }
+        }
+
+        public override decimal EstimatedCost
+        {
+            get { return base.EstimatedCost + ExtraFee; }
+        }
+        #endregion
+
+        #region Constructors
+        public ExpressShipment(string trackingCode, string description, decimal weight, decimal deliveryFee, DeliveryAddress destination, decimal extraFee)
+            : base(trackingCode, description, weight, deliveryFee, destination)
+        {
+            ExtraFee = extraFee;
+        }
+        #endregion
+
+        #region Methods
+        public override void PrintShipment()
+        {
+            Console.WriteLine("Express Shipment\n");
+            base.PrintShipment();
+            Console.WriteLine($"Extra Fee     : {ExtraFee} EGP");
+            Console.WriteLine("\n------------------------------------------\n");
+        }
+        #endregion
+    }
+    #endregion
+
+    #region InternationalShipment
+    public class InternationalShipment : Shipment
+    {
+        #region Fields & Properties
+        private string destinationCountry;
+        private decimal customsFee;
+
+        public string DestinationCountry
+        {
+            get { return destinationCountry; }
+            set { if (!string.IsNullOrWhiteSpace(value)) destinationCountry = value; }
+        }
+
+        public decimal CustomsFee
+        {
+            get { return customsFee; }
+            set { if (value >= 0) customsFee = value; }
+        }
+
+        public override decimal EstimatedCost
+        {
+            get { return base.EstimatedCost + CustomsFee; }
+        }
+        #endregion
+
+        #region Constructors
+        public InternationalShipment(string trackingCode, string description, decimal weight, decimal deliveryFee, DeliveryAddress destination, string destinationCountry, decimal customsFee)
+            : base(trackingCode, description, weight, deliveryFee, destination)
+        {
+            DestinationCountry = destinationCountry;
+            CustomsFee = customsFee;
+        }
+        #endregion
+
+        #region Methods
+        public virtual void GenerateCustomsReport()
+        {
+            Console.WriteLine($"Customs Report for {TrackingCode} to {DestinationCountry}. Fee: {CustomsFee}");
+        }
+
+        public override void PrintShipment()
+        {
+            Console.WriteLine("International Shipment\n");
+            base.PrintShipment();
+            Console.WriteLine($"Destination Country  : {DestinationCountry}");
+            Console.WriteLine($"Customs Fee          : {CustomsFee} EGP");
+            Console.WriteLine("\n==========================================\n");
+        }
+        #endregion
+    }
+    #endregion
+
+    #endregion
 
     #endregion
 
