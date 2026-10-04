@@ -7,7 +7,7 @@ namespace OOP03_SmartDelivery
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("=== Smart Delivery System V3 (OOP) ===\n");
+            Console.WriteLine(" Smart Delivery System V3 (OOP) \n");
 
 
         }
