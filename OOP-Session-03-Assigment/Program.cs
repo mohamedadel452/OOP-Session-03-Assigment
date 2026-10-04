@@ -261,6 +261,122 @@ namespace OOP03_SmartDelivery
     }
     #endregion
 
+ 
+    #endregion
+
+    #region DeliveryCenter & Helpers
+
+    #region Driver Class
+    public class Driver
+    {
+        public string Name { get; set; }
+        public Driver(string name) { Name = name; }
+    }
+    #endregion
+
+    #region DeliveryCenter Class
+    public class DeliveryCenter
+    {
+        #region Fields & Properties
+        public string CenterName { get; set; }
+        public Driver CenterDriver { get; set; }
+
+        private Shipment[] shipments = new Shipment[20];
+        #endregion
+
+        #region Constructors
+        public DeliveryCenter(string centerName) { CenterName = centerName; }
+        #endregion
+
+        #region Indexers
+        public Shipment this[int index]
+        {
+            get
+            {
+                if (index >= 0 && index < shipments.Length) return shipments[index];
+                return null;
+            }
+            set
+            {
+                if (index >= 0 && index < shipments.Length) shipments[index] = value;
+            }
+        }
+
+        public Shipment this[string trackingCode]
+        {
+            get
+            {
+                for (int i = 0; i < shipments.Length; i++)
+                {
+                    if (shipments[i] != null && shipments[i].TrackingCode == trackingCode) return shipments[i];
+                }
+                return null;
+            }
+        }
+        #endregion
+
+        #region Methods
+        public bool AddShipment(Shipment shipment)
+        {
+            if (shipment == null) return false;
+            for (int i = 0; i < shipments.Length; i++)
+            {
+                if (shipments[i] == null)
+                {
+                    shipments[i] = shipment;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool RemoveShipment(string trackingCode)
+        {
+            for (int i = 0; i < shipments.Length; i++)
+            {
+                if (shipments[i] != null && shipments[i].TrackingCode == trackingCode)
+                {
+                    shipments[i] = null;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void PrintAllShipments()
+        {
+            Console.WriteLine("==========================================");
+            Console.WriteLine(CenterName);
+            Console.WriteLine("==========================================\n");
+
+            if (CenterDriver != null)
+                Console.WriteLine($"Driver : {CenterDriver.Name}\n");
+
+            Console.WriteLine("------------------------------------------\n");
+
+            foreach (var ship in shipments)
+            {
+                //dynamic binding will be used here to call the appropriate PrintShipment method based on the actual object type (StandardShipment, ExpressShipment, InternationalShipment)
+                if (ship != null) ship.PrintShipment();
+            }
+        }
+        #endregion
+    }
+    #endregion
+
+    #region DeliveryHelper Static Class
+    public static class DeliveryHelper
+    {
+        public static void PrintShipmentDetails(Shipment shipment)
+        {
+            if (shipment != null)
+            {
+                shipment.PrintShipment();
+            }
+        }
+    }
+    #endregion
+
     #endregion
 
     #endregion
