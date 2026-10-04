@@ -390,6 +390,93 @@ namespace OOP03_SmartDelivery
             Console.WriteLine(" Smart Delivery System V3 (OOP) \n");
 
 
+            #region Read Shipment Data from User And Add to Delivery Center
+
+            Console.Write("Enter Delivery Center Name: ");
+            string centerName = Console.ReadLine();
+            DeliveryCenter center = new DeliveryCenter(centerName);
+
+            Console.Write("Enter Driver Name: ");
+            string driverName = Console.ReadLine();
+            center.CenterDriver = new Driver(driverName);
+
+
+            // 1. Standard Shipment
+            Console.WriteLine("\n--- Enter Standard Shipment Data ---");
+            Console.Write("Tracking Code: "); string t1 = Console.ReadLine();
+            Console.Write("Description: "); string d1 = Console.ReadLine();
+            Console.Write("Weight: "); decimal.TryParse(Console.ReadLine(), out decimal w1);
+            Console.Write("Delivery Fee: "); decimal.TryParse(Console.ReadLine(), out decimal f1);
+            Console.Write("City: "); string c1 = Console.ReadLine();
+            Console.Write("Street: "); string s1 = Console.ReadLine();
+            Console.Write("Building Number: "); int.TryParse(Console.ReadLine(), out int b1);
+
+            DeliveryAddress addr1 = new DeliveryAddress(c1, s1, b1);
+            StandardShipment std = new StandardShipment(t1, d1, w1, f1, addr1);
+            center.AddShipment(std);
+
+            // 2. Express Shipment
+            Console.WriteLine("\n--- Enter Express Shipment Data ---");
+            Console.Write("Tracking Code: "); string t2 = Console.ReadLine();
+            Console.Write("Description: "); string d2 = Console.ReadLine();
+            Console.Write("Weight: "); decimal.TryParse(Console.ReadLine(), out decimal w2);
+            Console.Write("Delivery Fee: "); decimal.TryParse(Console.ReadLine(), out decimal f2);
+            Console.Write("Extra Fee: "); decimal.TryParse(Console.ReadLine(), out decimal x2);
+            Console.Write("City: "); string c2 = Console.ReadLine();
+            Console.Write("Street: "); string s2 = Console.ReadLine();
+            Console.Write("Building Number: "); int.TryParse(Console.ReadLine(), out int b2);
+
+            DeliveryAddress addr2 = new DeliveryAddress(c2, s2, b2);
+            ExpressShipment exp = new ExpressShipment(t2, d2, w2, f2, addr2, x2);
+            center.AddShipment(exp);
+
+            #endregion
+
+            #region Print All Shipments
+
+            // Print all
+            Console.WriteLine("\n==========================================");
+            center.PrintAllShipments();
+
+            // Print using Helper
+            Console.WriteLine("Printing Using DeliveryHelper...\n");
+            DeliveryHelper.PrintShipmentDetails(std);
+            DeliveryHelper.PrintShipmentDetails(exp);
+            
+            Console.WriteLine("==========================================\n");
+
+            // Update Weight Testing
+            Console.WriteLine("Updating Weight For Standard Shipment...\n");
+            Console.WriteLine($"Original Weight : {std.Weight} KG\n");
+
+            Console.Write("Enter new weight for standard shipment: ");
+            if (decimal.TryParse(Console.ReadLine(), out decimal newWeight))
+            {
+                std.UpdateWeight(newWeight);
+                Console.WriteLine($"Updated Weight : {std.Weight} KG\n");
+
+                Console.Write("Enter extra packing weight: ");
+                if (decimal.TryParse(Console.ReadLine(), out decimal extraPackingWeight))
+                {
+                    std.UpdateWeight(newWeight, extraPackingWeight);
+                    Console.WriteLine($"Updated Weight After Packing : {std.Weight} KG\n");
+                }
+            }
+            Console.WriteLine("==========================================\n");
+            
+            //Printing Using Shipment[]...
+            Console.WriteLine("Printing Using Shipment[]...\n");
+            Shipment[] mixedArray = {std, exp};
+            foreach (var shipment in mixedArray)
+            {
+               shipment.PrintShipment();
+            }
+            Console.WriteLine("==========================================\n");
+
+            #endregion 
+
+
+
         }
     }
     #endregion
