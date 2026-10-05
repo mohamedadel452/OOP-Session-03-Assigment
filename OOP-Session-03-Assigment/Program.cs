@@ -525,7 +525,42 @@ namespace OOP03_SmartDelivery
             }
             Console.WriteLine("==========================================\n");
 
-            #endregion 
+            #endregion
+
+            #region Demonstrate the sealed class and sealed method
+            
+            
+            // l. Demonstrate the sealed class and sealed method
+            Console.WriteLine("Demonstrating Sealed Class and Method...\n");
+
+            // 1. Sealed Class Demonstration
+            CompletedShipment completed = new CompletedShipment("C-SEALED-01");
+            completed.Description = "Delivered safely";
+            completed.PrintShipment();
+            /* 
+             * EXPLANATION: CompletedShipment is a 'sealed class'. 
+             * If we try to write: `public class ArchiveShipment : CompletedShipment { }`
+             * The compiler will throw an error: "cannot derive from sealed type 'CompletedShipment'".
+             */
+
+            Console.WriteLine();
+
+            // 2. Sealed Method Demonstration
+            DeliveryAddress priorityAddr = new DeliveryAddress("Alexandria", "Corniche", 50);
+            PriorityInternationalShipment priority = new PriorityInternationalShipment(
+                "P-SEALED-02", "Medical Supplies", 10m, 150m, priorityAddr, "France", 300m);
+
+            // This calls the sealed override method
+            priority.GenerateCustomsReport();
+
+            /* 
+             * EXPLANATION: GenerateCustomsReport() is a 'sealed override' method.
+             * If another class inherits from PriorityInternationalShipment and tries to override it again:
+             * `public override void GenerateCustomsReport() { }`
+             * The compiler will throw an error: "cannot override inherited member because it is sealed".
+             */
+
+            #endregion
 
 
 
