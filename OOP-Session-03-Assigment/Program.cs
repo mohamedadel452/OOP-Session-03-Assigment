@@ -283,10 +283,6 @@ namespace OOP03_SmartDelivery
     #endregion
 
 
-
-
-
-
     #endregion
 
     #region DeliveryCenter & Helpers
@@ -455,6 +451,24 @@ namespace OOP03_SmartDelivery
             ExpressShipment exp = new ExpressShipment(t2, d2, w2, f2, addr2, x2);
             center.AddShipment(exp);
 
+            // 3. International Shipment
+            Console.WriteLine("\n--- Enter International Shipment Data ---");
+            Console.Write("Tracking Code: "); string t3 = Console.ReadLine();
+            Console.Write("Description: "); string d3 = Console.ReadLine();
+            Console.Write("Weight: "); decimal.TryParse(Console.ReadLine(), out decimal w3);
+            Console.Write("Delivery Fee: "); decimal.TryParse(Console.ReadLine(), out decimal f3);
+            Console.Write("Destination Country: "); string dc3 = Console.ReadLine();
+            Console.Write("Customs Fee: "); decimal.TryParse(Console.ReadLine(), out decimal cu3);
+            Console.Write("City: "); string c3 = Console.ReadLine();
+            Console.Write("Street: "); string s3 = Console.ReadLine();
+            Console.Write("Building Number: "); int.TryParse(Console.ReadLine(), out int b3);
+
+            DeliveryAddress addr3 = new DeliveryAddress(c3, s3, b3);
+            InternationalShipment intl = new InternationalShipment(t3, d3, w3, f3, addr3, dc3, cu3);
+            center.AddShipment(intl);
+
+
+
             #endregion
 
             #region Print All Shipments
@@ -467,7 +481,7 @@ namespace OOP03_SmartDelivery
             Console.WriteLine("Printing Using DeliveryHelper...\n");
             DeliveryHelper.PrintShipmentDetails(std);
             DeliveryHelper.PrintShipmentDetails(exp);
-            
+            DeliveryHelper.PrintShipmentDetails(intl);
             Console.WriteLine("==========================================\n");
 
             // Update Weight Testing
@@ -491,8 +505,8 @@ namespace OOP03_SmartDelivery
             
             //Printing Using Shipment[]...
             Console.WriteLine("Printing Using Shipment[]...\n");
-            Shipment[] mixedArray = {std, exp};
-            foreach (var shipment in mixedArray)
+            Shipment[] mixedArray = {std, exp, intl};
+            foreach (Shipment shipment in mixedArray)
             {
                shipment.PrintShipment();
             }
