@@ -275,9 +275,18 @@ namespace OOP03_SmartDelivery
     }
     #endregion
 
+    #region CompletedShipment (Sealed Class)
+    public sealed class CompletedShipment : Shipment
+    {
+        public CompletedShipment(string trackingCode) : base(trackingCode) { }
+    }
+    #endregion
 
 
- 
+
+
+
+
     #endregion
 
     #region DeliveryCenter & Helpers
