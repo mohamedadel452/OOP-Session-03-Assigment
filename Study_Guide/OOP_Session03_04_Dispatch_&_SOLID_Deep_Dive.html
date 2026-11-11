@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تعمق: Dispatch و virtual/new و Template Method و SOLID مع الـ DI</title>
+<style>
+:root{--bg:#f6f7f4;--fg:#1d2327;--mut:#5b6670;--card:#fff;--line:#d9ded8;--acc:#0b6b5c;--warn:#a4440f;--warnbg:#fdf0e6;--code:#10201c;--codefg:#d7efe6;--okbg:#e6f4ef}
+@media(prefers-color-scheme:dark){:root{--bg:#121816;--fg:#e4ebe8;--mut:#9aa8a3;--card:#1a2320;--line:#2c3834;--acc:#4fc2a8;--warn:#f0a066;--warnbg:#2b2118;--code:#0b1210;--okbg:#17302a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.85 "Segoe UI",Tahoma,"Noto Naskh Arabic",system-ui,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:860px;margin:0 auto;padding:28px 18px 80px}
+h1{font-size:1.9rem;line-height:1.4;margin:.2em 0}
+h2{font-size:1.4rem;margin:2.2em 0 .5em;padding-inline-start:12px;border-inline-start:5px solid var(--acc)}
+h3{font-size:1.08rem;margin:1.5em 0 .3em;color:var(--acc)}
+p{margin:.6em 0}.lead{color:var(--mut)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+nav a{color:var(--fg);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:4px 12px;border-radius:6px;font-size:.9rem}
+nav a:hover,nav a:focus-visible{border-color:var(--acc);color:var(--acc)}
+pre{direction:ltr;text-align:left;background:var(--code);color:var(--codefg);padding:14px 16px;border-radius:8px;overflow-x:auto;font:14px/1.6 Consolas,Menlo,monospace;margin:.8em 0}
+code{direction:ltr;unicode-bidi:embed;font-family:Consolas,Menlo,monospace;font-size:.9em;background:var(--okbg);padding:1px 6px;border-radius:4px}
+pre code{background:none;padding:0;font-size:inherit}
+.box{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 16px;margin:1em 0}
+.warn{background:var(--warnbg);border-color:var(--warn)}.warn .t{color:var(--warn)}
+.tw{overflow-x:auto;margin:1em 0}
+table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card)}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:start;vertical-align:top;font-size:.95rem}
+th{background:var(--okbg)}
+footer{margin-top:3em;color:var(--mut);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<h1>تعمق: كيف بيشتغل الـ Dispatch، وتصميم الـ OOP الصح</h1>
+<p class="lead">كمّلنا من اقتراحات الجلسة السابقة. أربع محاور: الـ dispatch في الـ CLR، الفرق بين virtual/abstract/new، Template Method مقابل Composition، و SOLID مع الـ DI.</p>
+<nav><a href="#d">1. الـ Dispatch</a><a href="#v">2. virtual و new</a><a href="#t">3. Template و Composition</a><a href="#s">4. DIP و ISP و DI</a></nav>
+
+<h2 id="d">1) الـ Dispatch: إزاي الـ Runtime يعرف يشغّل أنهي دالة؟</h2>
+<p><b>الفكرة:</b> الـ Compiler مش دايماً يعرف وقت الترجمة الدالة اللي هتتنفذ. لو النوع الفعلي مش معروف، القرار بيتأجل للـ Runtime.</p>
+<h3>الدوال العادية و virtual</h3>
+<ul>
+<li>دالة عادية: العنوان معروف وقت الـ JIT. نداء مباشر.</li>
+<li>دالة virtual: الـ object فيه header بيشاور على الـ <b>MethodTable</b> بتاع نوعه الفعلي. الدالة ليها رقم slot ثابت، فالـ Runtime بيجيب العنوان من <code>MethodTable[slot]</code>. الـ override بيحط كوده في نفس الـ slot اللي في الأب.</li>
+<li>تكلفتها: قراءتين من الميموري ونداء غير مباشر. ومعاها بيصعب على الـ JIT يعمل inlining.</li>
+</ul>
+<h3>الـ Interface مختلف</h3>
+<p>الـ interface slot مش ثابت لأن الـ class الواحد ينفذ interfaces كتير، وكل class بيرتبهم بشكل مختلف. فالـ CLR بيستخدم <b>Virtual Stub Dispatch</b>: عند كل call site بيتولد stub صغير بيخزّن نتيجة آخر نوع شافه (cache)، فلو النوع ثابت يبقى النداء سريع، ولو بيتغير يبقى أبطأ شوية. الـ .NET الحديثة بتضيف <b>Guarded Devirtualization</b> بالـ PGO: لو لقى إن النوع الغالب واحد، بيحط check ونداء مباشر.</p>
+<div class="box warn"><p><b class="t">مفهوم خاطئ:</b> "الـ interface أبطأ بكتير من الـ abstract class". الفرق موجود لكنه صغير ومعظم الوقت مش هو عنق الزجاجة. المشكلة الحقيقية الأكبر هي الـ boxing مع الـ structs وكتر الـ allocations، مش الـ dispatch.</p></div>
+<h3>إيه اللي يساعد الـ JIT؟</h3>
+<pre><code>public sealed class SqlOrderRepository : IOrderRepository { ... }
+// sealed: الـ JIT يعرف إن مفيش ابن، فيقدر يعمل devirtualize
+// لما يكون النوع معروف من الـ new أو الـ field المحدد</code></pre>
+<p>اتأكد بنفسك: افتح <b>SharpLab.io</b> واختار IL، وشوف الفرق بين <code>call</code> و <code>callvirt</code> في الأسطر القادمة.</p>
+
+<h2 id="v">2) virtual و abstract و override و new</h2>
+<pre><code>class A {
+    public virtual void F() =&gt; Console.WriteLine("A.F");
+    public void G()          =&gt; Console.WriteLine("A.G");
+}
+class B : A {
+    public override void F() =&gt; Console.WriteLine("B.F");   // نفس الـ slot
+    public new void G()      =&gt; Console.WriteLine("B.G");   // دالة تانية بنفس الاسم
+}
+
+A x = new B();
+x.F();        // B.F  : decided at runtime
+x.G();        // A.G  : decided at compile time by reference type
+((B)x).G();   // B.G</code></pre>
+<div class="tw"><table>
+<tr><th>الكلمة</th><th>بتعمل إيه في الـ IL</th><th>القرار بيتاخد</th></tr>
+<tr><td><code>virtual</code></td><td>دالة بـ slot جديد (<code>virtual newslot</code>)</td><td>Runtime</td></tr>
+<tr><td><code>abstract</code></td><td>virtual من غير جسم، والـ class لازم يبقى abstract</td><td>Runtime</td></tr>
+<tr><td><code>override</code></td><td>بتعيد استخدام slot الأب</td><td>Runtime</td></tr>
+<tr><td><code>new</code> (hiding)</td><td>دالة جديدة مالهاش علاقة بالـ slot القديم</td><td>Compile time، حسب نوع الـ reference</td></tr>
+<tr><td>من غير أي كلمة</td><td>نفس سلوك <code>new</code> مع تحذير CS0114</td><td>Compile time</td></tr>
+</table></div>
+<div class="box warn"><p><b class="t">باگ في الإنتاج:</b> نسيان <code>override</code> على دالة موجودة في الأب كـ virtual بيطلّع تحذير بس، مش error. الكود بيتبني، وبعدين الـ polymorphism يتكسر بصمت وتتنفذ دالة الأب. اعمل <code>&lt;TreatWarningsAsErrors&gt;</code> لتحذيرات زي CS0114 و CS0108.</p></div>
+<p><b>ليه C# بتخلي <code>virtual</code> صريحة (عكس Java)؟</b> لأن الـ virtual dispatch بيمنع الـ inlining ومعمول عليه عقد: لازم الأب يتوقع إن حد يغير سلوك الدالة. جعلها اختيار واعي بيحمي من الـ Fragile Base Class.</p>
+
+<h2 id="t">3) Template Method مقابل Composition over Inheritance</h2>
+<h3>Template Method: الوراثة لما تكون مناسبة</h3>
+<pre><code>public abstract class ReportJob
+{
+    public async Task RunAsync()               // الخوارزمية ثابتة ومش virtual
+    {
+        var rows = await LoadAsync();          // خطوة متغيرة
+        var text = Format(rows);               // خطوة متغيرة
+        Console.WriteLine(Header() + text);    // خطوة اختيارية
+    }
+    protected abstract Task&lt;IReadOnlyList&lt;string&gt;&gt; LoadAsync();
+    protected abstract string Format(IReadOnlyList&lt;string&gt; rows);
+    protected virtual string Header() =&gt; "Report\n";
+}</code></pre>
+<p>الأب بيتحكم في <b>الترتيب</b>، والأبناء بيملوا الخطوات. مناسب لما الـ skeleton ثابت فعلاً ومحدش هيغيره.</p>
+<h3>مشكلة الوراثة: Fragile Base Class</h3>
+<pre><code>class Bag {
+    protected readonly List&lt;int&gt; items = new();
+    public virtual void Add(int x) =&gt; items.Add(x);
+    public virtual void AddRange(IEnumerable&lt;int&gt; xs) { foreach (var x in xs) Add(x); }
+}
+class CountingBag : Bag {
+    public int Added;
+    public override void Add(int x) { Added++; base.Add(x); }
+    public override void AddRange(IEnumerable&lt;int&gt; xs) { Added += xs.Count(); base.AddRange(xs); }
+}
+var b = new CountingBag();
+b.AddRange(new[] { 1, 2, 3 });
+Console.WriteLine(b.Added);   // 6 !  المفروض 3</code></pre>
+<p>الابن اعتمد على تفصيلة داخلية (إن <code>AddRange</code> بتنادي <code>Add</code>). لو الأب غيّرها، الابن يتكسر من غير ما حد يلمسه. الوراثة بتكشف <b>التنفيذ الداخلي</b> للأب.</p>
+<h3>Composition: الحل</h3>
+<pre><code>public interface IPaymentGateway { Task ChargeAsync(decimal amount); }
+public interface INotifier       { Task SendAsync(string msg); }
+
+public class CheckoutService(IPaymentGateway gateway, INotifier notifier)
+{
+    public async Task CheckoutAsync(decimal total)
+    {
+        await gateway.ChargeAsync(total);
+        await notifier.SendAsync($"Charged {total}");
+    }
+}</code></pre>
+<p>بدل <code>CheckoutService : EmailSender : PaymentBase</code>، بتركّب السلوك من أجزاء بتتبدل وقت الـ Runtime وبتتعمل لها mocks.</p>
+<div class="box warn"><p><b class="t">الحدود:</b> الـ composition بتزود الـ boilerplate والـ indirection، ولو محتاج تعدّل <b>كل</b> سلوك الأب فعلاً فالوراثة أنضف. القاعدة العملية: وراثة لـ is-a حقيقية ومستقرة (والأب مصمم للوراثة)، وغير كده composition. وعلّم الـ classes اللي مش مصممة للوراثة بـ <code>sealed</code>.</p></div>
+
+<h2 id="s">4) DIP و ISP و الـ DI</h2>
+<h3>ISP: Interface Segregation</h3>
+<pre><code>// سيء: interface كبير
+public interface IRepository&lt;T&gt; { T Get(int id); void Add(T e); void Update(T e); void Delete(int id); }
+
+// أفضل: قدرات منفصلة
+public interface IReader&lt;T&gt; { T Get(int id); }
+public interface IWriter&lt;T&gt; { void Add(T e); void Update(T e); void Delete(int id); }
+
+public class ReportService(IReader&lt;Order&gt; orders) { }   // مش محتاج Delete أصلاً</code></pre>
+<p>الـ client مايتجبرش يعتمد على دوال مش بيستخدمها. ده بيقلل الـ mocking المعقد وأثر أي تغيير.</p>
+<h3>DIP: Dependency Inversion</h3>
+<p>الـ high-level (منطق الأعمال) مايعتمدش على الـ low-level (EF Core أو SMTP). الاتنين يعتمدوا على abstraction، و<b>الـ abstraction يتعرّف جنب المستهلك مش جنب التنفيذ</b>.</p>
+<div class="box warn"><p><b class="t">مفهوم خاطئ شائع:</b> "الـ DI container = DIP". لا. الـ DIP مبدأ تصميم (مين يملك الـ interface). والـ DI تقنية لتمرير الـ dependencies. تقدر تستخدم container وتكسر الـ DIP لو الـ interface معرّف جوه طبقة الـ Infrastructure.</p></div>
+<h3>التسجيل في ASP.NET Core</h3>
+<pre><code>builder.Services.AddScoped&lt;IOrderRepository, EfOrderRepository&gt;();
+builder.Services.AddSingleton&lt;ReportCache&gt;();
+
+public class ReportCache(IOrderRepository repo) { }   // singleton بيعتمد على scoped!</code></pre>
+<div class="box warn"><p><b class="t">باگ حقيقي: Captive Dependency.</b> الـ singleton بيمسك نسخة scoped (وبالتالي DbContext) طول عمر التطبيق، فتتشارك بين الـ requests وتبوظ الـ thread safety والـ change tracking. في بيئة Development الـ framework بيرمي exception لأن <code>ValidateScopes</code> شغال، لكن مش مضمون إنك تشوفه في الإنتاج. القاعدة: الأطول عمراً ماياخدش الأقصر عمراً.</p></div>
+<div class="tw"><table>
+<tr><th>Lifetime</th><th>الاستخدام</th><th>الخطر</th></tr>
+<tr><td>Transient</td><td>خدمات خفيفة من غير state</td><td>allocation كتير لو اتكررت</td></tr>
+<tr><td>Scoped</td><td>request واحد (DbContext)</td><td>مايتحقنش في singleton</td></tr>
+<tr><td>Singleton</td><td>cache و config، لازم thread-safe</td><td>state مشترك وتسريب ذاكرة</td></tr>
+</table></div>
+<p><b>تكلفة الإفراط:</b> عمل interface لكل class بتنفيذ واحد بيزود الملفات من غير فايدة. استخدم interface لما يكون في أكتر من تنفيذ محتمل، أو حد خارجي (HTTP, DB, ساعة النظام) محتاج تعزله في الاختبار.</p>
+<h3>Service Locator (Anti-pattern)</h3>
+<pre><code>var repo = provider.GetRequiredService&lt;IOrderRepository&gt;();  // جوه الدالة</code></pre>
+<p>بيخبي الـ dependencies جوه الكود فمبتبانش في الـ constructor، ومبتتكتشفش إلا وقت التنفيذ. استخدم constructor injection.</p>
+
+<footer>مؤجل للجولة الجاية بسبب الحجم: تفاصيل الـ IL لكل حالة، و OCP و LSP و SRP، و Decorator مع الـ DI. اطلب أي واحد وهكمله.</footer>
+</main>
+</body>
+</html>
